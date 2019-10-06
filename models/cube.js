@@ -4,11 +4,8 @@ const cubeSchema = new mongoose.Schema({
     name: String,
     description: String,
     imageUrl: String,
-    difficultyLevel: Number
+    difficultyLevel: Number,
+    accessories: [{ type: mongoose.Types.ObjectId, ref:'Accessories' }]
 });
-
-cubeSchema.methods.getDescription = function() {
-    return this.description;
-};
 
 module.exports = mongoose.model('Cube', cubeSchema);

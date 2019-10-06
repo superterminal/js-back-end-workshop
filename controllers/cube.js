@@ -1,38 +1,37 @@
-const cubeModel = require('../models/cube');
+const { cubeModel } = require('../models');
 
 function index(req, res, next) {
-    // const { from, to, search } = req.query;
-    // const findFn = item => {
-    //     let result = true;
+    const { from, to, search } = req.query;
+    let query = {};
 
-    //     if (search) {
-    //         result = item.name.toLowerCase().includes(search);
-    //     }
-    //     if (result && from) {
-    //         result = +item.difficultyLevel >= +from;
-    //     }
-    //     if (result && to) {
-    //         result = +item.difficultyLevel <= +to;
-    //     }
+    if (search) {
+        query = { ...query, name: { $regex: search } };
+    }
 
-    //     return result;
-    // }
+    if (to) {
+        query = { ...query, difficultyLevel: { $lte: +to }};
+    }
 
-    cubeModel.find().then(cubes => {
+    if (from) {
+        query = { ...query, difficultyLevel: { ...query.difficultyLevel, $gte: +from}};
+    }
+
+    cubeModel.find(query).then(cubes => {
         res.render('../views/index.hbs', { 
             cubes, 
-            // search, 
-            // from, 
-            // to
+            search, 
+            from, 
+            to
         });
     }).catch(next);
 }
 
 function details(req, res, next) {
     const id = req.params.id;
-    cubeModel.findById(id).then(cube => {
-        if (!cube) { res.redirect('/not-found'); return; }
-        res.render('../views/details.hbs', { cube });
+    cubeModel.findById(id).populate('accessories')
+        .then(cube => {
+            if (!cube) { res.redirect('/not-found'); return; }
+            res.render('../views/details.hbs', { cube });
     }).catch(next);
 }
 
