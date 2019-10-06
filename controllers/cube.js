@@ -46,8 +46,9 @@ function about(req, res) {
 
 function postCreate(req, res) {
     const { name = null, description = null, imageUrl = null, difficultyLevel = null } = req.body;
-    const newCube = cubeModel.create(name, description, imageUrl, difficultyLevel);
-    cubeModel.insert(newCube).then(() => {
+    // const newCube = cubeModel.create(name, description, imageUrl, difficultyLevel);
+    cubeModel.create({ name, description, imageUrl, difficultyLevel }).then((cube) => {
+        console.log(cube);
         res.redirect('/');
     });
 }
