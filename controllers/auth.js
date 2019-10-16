@@ -13,7 +13,7 @@ function register(req, res, next) {
 function loginPost(req, res, next) {
     const { username, password } = req.body;
     models.userModel.findOne({ username })
-        .then(user => Promise.all([user, user.matchPassword(password)]))
+        .then(user => Promise.all([user, user ? user.matchPassword(password) : false]))
         .then(([user, match]) => {
             if (!match) {
                 res.render('login.hbs', { message: 'Wrong password or username'});
@@ -30,7 +30,7 @@ function registerPost(req, res, next) {
     if (password !== repeatPassword) { 
         res.render('register.hbs', { 
             errors: { 
-                repeatPasswod: 'Password and repeat password don\'t match' 
+                repeatPassword: 'Password and repeat password don\'t match' 
             } 
         })
         return;
