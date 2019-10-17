@@ -23,7 +23,7 @@ dbConnector().then(() => {
     require('./config/routes')(app);
 
     app.use(function(err, req, res, next) {
-        console.error(error);
+        console.log(err);
         res.render('500.hbs', { errorMessage: err.message });
     })
     
