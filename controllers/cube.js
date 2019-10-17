@@ -31,10 +31,15 @@ function index(req, res, next) {
 
 function details(req, res, next) {
     const id = req.params.id;
-    const user = req.user;
+    let  user = req.user;
     models.cubeModel.findById(id).populate('accessories')
         .then(cube => {
             if (!cube) { res.redirect('/not-found'); return; }
+            // toString() for creatorId to work, otherwise its an object
+            if (cube.creatorId.toString() !== user._id.toString()) {
+                user = false;
+            }
+            console.log('user', user);
             res.render('../views/details.hbs', { cube, user });
     }).catch(next);
 }
@@ -47,32 +52,48 @@ function about(req, res) {
     res.render('about.hbs');
 }
 
-function postCreate(req, res) {
+function postCreate(req, res, next) {
     const { name = null, description = null, imageUrl = null, difficultyLevel = null } = req.body;
     const { user } = req;
 
     models.cubeModel.create({ name, description, imageUrl, difficultyLevel, creatorId: user._id }).then((cube) => {
         res.redirect('/');
+    }).catch(err => {
+        if (err.name === 'ValidationError') {
+            res.render('create.hbs', {
+                errors: err.errors
+            });
+            return;
+        }
+        next();
     });
 }
 
 function getCreate(req, res) {
-    res.render('create.hbs');
+    res.render('create.hbs', {user: req.user});
 }
 
-function postEdit(req, res) {
+function postEdit(req, res, next) {
     const id = req.params.id;
     const { name = null, description = null, imageUrl = null, difficultyLevel = null } = req.body;
     const { user } = req;
     
-    models.cubeModel.updateOne({_id: id}, { name, description, imageUrl, difficultyLevel, creatorId: user._id }).then((cube) => {
+    models.cubeModel.updateOne({_id: id}, { name, description, imageUrl, difficultyLevel, creatorId: user._id }, {runValidators: true}).then((cube) => {
         res.redirect('/');
+    }).catch(err => {
+        if (err.name === 'ValidationError') {
+            res.render('editCube.hbs', {
+                errors: err.errors
+            });
+            return;
+        }
+        next(err);
     });
 }
 
 function getEdit(req, res, next) {
     const id = req.params.id;
-    const { user } = req;
+    const user = req.user;
     models.cubeModel.findOne({ _id: id, creatorId: user._id }).then(cube => {
         const options = [
             { title: '1 - Very Easy', selected: 1 === cube.difficultyLevel },
@@ -82,8 +103,8 @@ function getEdit(req, res, next) {
             { title: '5 - Expert', selected: 5 === cube.difficultyLevel },
             { title: '6 - Hardcore', selected: 6 === cube.difficultyLevel }
         ];
-        res.render('editCube.hbs', { cube, options });
-    }).next(next);
+        res.render('editCube.hbs', { cube, user, options });
+    }).catch(next);
 }
 
 function getDelete(req, res, next) {
@@ -107,7 +128,7 @@ function postDelete (req, res, next) {
    const { user } = req;
    models.cubeModel.findByIdAndDelete({ _id: id, creatorId: user._id }).then(() => {
     res.redirect('/');
-   });
+   }).catch(next);
 }
 
 module.exports = {
