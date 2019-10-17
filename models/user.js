@@ -6,9 +6,26 @@ const userSchema = new mongoose.Schema({
     username: {
         type: String,
         required: true,
-        unique: true
+        unique: true,
+        minlength: [5, 'Username should be atleast 5 characters'],
+        validate: {
+            validator: v => {
+                return /[A-Za-z0-9]+/.test(v);
+            },
+            message: props => `${props.value} is not a valid username!`
+        }
     },
-    password: String
+    password: {
+        type: String,
+        required: true,
+        minlength: [8, 'Password should be at least 8 characters'],
+        validate: {
+            validator: v => {
+                return /[A-Za-z0-9]+/.test(v);
+            },
+            message: props => `${props.value} is not a valid password!`
+        }
+    }
 });
 
 userSchema.methods = {
