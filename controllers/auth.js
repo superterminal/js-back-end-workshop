@@ -1,6 +1,7 @@
 const models = require('../models');
 const utils = require('../utils');
 const appConfig = require('../app-config');
+const { validationResult } = require('express-validator');
 
 function login(req, res) {
     res.render('login.hbs');
@@ -25,25 +26,23 @@ function loginPost(req, res, next) {
 }
 
 function registerPost(req, res, next) {
+    let result;
+
     const { username, password, repeatPassword } = req.body;
 
-    if (password !== repeatPassword) { 
-        res.render('register.hbs', { 
-            errors: { 
-                repeatPassword: 'Password and repeat password don\'t match' 
-            } 
-        })
-        return;
-    }
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) { 
+        result = Promise.reject({ name: 'ValidationError', errors: errors.errors });
+     } else {
+        result = models.userModel.create({ username, password });
+     }
 
-    return models.userModel.create({ username, password }).then(() => {
+    return result.then(() => {
         res.redirect('/login');
     }).catch(err => {
-        if (err.name === 'MongoError' && err.code === 11000) {
+        if (err.name === 'ValidationError') {
             res.render('register.hbs', { 
-                errors: { 
-                    username: 'User already registered' 
-                } 
+                errors: err.errors
             });
             return;
         }

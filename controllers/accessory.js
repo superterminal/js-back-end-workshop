@@ -8,7 +8,7 @@ function createPost(req, res, next) {
 }
 
 function createGet(req, res, next) {
-    res.render('createAccessory.hbs');
+    res.render('createAccessory.hbs', {user: req.user});
 }
 
 function attachPost(req, res, next) {
